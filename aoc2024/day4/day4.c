@@ -22,7 +22,7 @@ int main()
 
 	size_t line_size = 0;
 	ssize_t read;
-	char *line;
+	char *line = NULL;
 	while ((read = getline(&line, &line_size, fp)) != -1)
 	{
 		line_length = strlen(line);
@@ -43,6 +43,8 @@ int main()
 
 	free(word_input);
 	free(line);
+
+	fclose(fp);
 
 	return 0;
 }

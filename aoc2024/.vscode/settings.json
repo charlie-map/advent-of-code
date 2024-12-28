@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "fileread.h": "c",
+        "split_string.h": "c"
+    }
+}

@@ -3,6 +3,7 @@
 #include <string.h>
 
 int sum(char *input, int line_length);
+int sum2(char *input, int line_length);
 
 int main()
 {
@@ -10,7 +11,7 @@ int main()
     char *word_input = malloc(sizeof(char) * line_length);
     FILE *fp;
 
-    fp = fopen("input.txt", "r");
+    fp = fopen("input2.txt", "r");
 
     if (fp == NULL)
     {
@@ -30,7 +31,7 @@ int main()
         word_input[line_length] = '\0';
     }
 
-    printf("Number for mul: %d\n", sum(word_input, line_length));
+    printf("Number for mul: %d\n", sum2(word_input, line_length));
 
     free(word_input);
     free(line);
@@ -113,18 +114,62 @@ char **break_by_mul(char *input, int line_length, int *collector_length, int **i
 /**
  * Strat:
  *
+ * - Search through remainder for dos or donts, set should multi occordingly
+ * WARNING: Do not try this at home.
+ *
+ * Return yes or no depending on ending..
+ */
+int should_multi_check(char *search_token, int multi)
+{
+    while (search_token && *search_token)
+    {
+        if (
+            *search_token == 'd' &&
+            *(search_token + sizeof(char)) == 'o' &&
+            *(search_token + 2 * sizeof(char)) == '(' &&
+            *(search_token + 3 * sizeof(char)) == ')')
+        {
+            multi = 1;
+            search_token += 4 * sizeof(char);
+            continue;
+        }
+
+        if (
+            *search_token == 'd' &&
+            *(search_token + sizeof(char)) == 'o' &&
+            *(search_token + 2 * sizeof(char)) == 'n' &&
+            *(search_token + 3 * sizeof(char)) == '\'' &&
+            *(search_token + 4 * sizeof(char)) == 't' &&
+            *(search_token + 5 * sizeof(char)) == '(' &&
+            *(search_token + 6 * sizeof(char)) == ')')
+        {
+            multi = 0;
+            search_token += 7 * sizeof(char);
+            continue;
+        }
+
+        search_token += sizeof(char);
+    }
+
+    return multi;
+}
+
+/**
+ * Strat:
+ *
  * - First character MUST be a `(`, otherwise place a null in;
  * - Search for `,` 3 or less away from `(`;
  * - Search for `)` 3 or less away from `,`;
  *
  * Return the bits we find in there if we find anything..
  */
-int *find_matching_number(char *token, int inner_token_length)
+int *find_matching_number(char *token, int inner_token_length, int *should_multi)
 {
     char *match = malloc(sizeof(char) * inner_token_length);
 
     if (inner_token_length < 5 || token[0] != '(')
     {
+        *should_multi = should_multi_check(token, *should_multi);
         return NULL;
     }
 
@@ -136,11 +181,13 @@ int *find_matching_number(char *token, int inner_token_length)
     {
         if (first_number_index > 4)
         {
+            *should_multi = should_multi_check(token, *should_multi);
             return NULL;
         }
 
         if (*token_search < 48 || *token_search > 57)
         {
+            *should_multi = should_multi_check(token, *should_multi);
             return NULL;
         }
 
@@ -149,7 +196,9 @@ int *find_matching_number(char *token, int inner_token_length)
         token_search += sizeof(char);
     }
 
-    if (*token_search != ',') {
+    if (*token_search != ',')
+    {
+        *should_multi = should_multi_check(token, *should_multi);
         return NULL;
     }
 
@@ -164,11 +213,13 @@ int *find_matching_number(char *token, int inner_token_length)
     {
         if (second_number_index > 4)
         {
+            *should_multi = should_multi_check(token, *should_multi);
             return NULL;
         }
 
         if (*token_search < 48 || *token_search > 57)
         {
+            *should_multi = should_multi_check(token, *should_multi);
             return NULL;
         }
 
@@ -177,12 +228,16 @@ int *find_matching_number(char *token, int inner_token_length)
         token_search += sizeof(char);
     }
 
-    if (*token_search != ')') {
+    if (*token_search != ')')
+    {
+        *should_multi = should_multi_check(token, *should_multi);
         return NULL;
     }
 
     int second_number_int = atoi(second_number);
     free(second_number);
+
+    *should_multi = should_multi_check(token_search, *should_multi);
 
     int *matching_numbers = malloc(sizeof(int) * 2);
     matching_numbers[0] = first_number_int;
@@ -201,7 +256,7 @@ int sum(char *input, int line_length)
     int found = 0;
     for (int find_numbers_index = 0; find_numbers_index < collector_length; find_numbers_index++)
     {
-        int *find_numbers = find_matching_number(mul_tokens[find_numbers_index], (*inner_collector_length)[find_numbers_index]);
+        int *find_numbers = find_matching_number(mul_tokens[find_numbers_index], (*inner_collector_length)[find_numbers_index], NULL);
 
         if (find_numbers)
         {
@@ -209,6 +264,35 @@ int sum(char *input, int line_length)
             sum += find_numbers[0] * find_numbers[1];
             free(find_numbers);
         }
+    }
+
+    return sum;
+}
+
+int sum2(char *input, int line_length)
+{
+    int collector_length = 0;
+    int **inner_collector_length = malloc(sizeof(int *));
+    char **mul_tokens = break_by_mul(input, line_length, &collector_length, inner_collector_length);
+
+    int sum = 0;
+    int should_multi = 1;
+
+    int found = 0;
+    for (int find_numbers_index = 0; find_numbers_index < collector_length; find_numbers_index++)
+    {
+        int new_multi = should_multi;
+        int *find_numbers = find_matching_number(mul_tokens[find_numbers_index], (*inner_collector_length)[find_numbers_index], &new_multi);
+
+        if (find_numbers)
+        {
+            found++;
+            printf("%s - mul(%d, %d)\n", should_multi ? "----------------------" : "", find_numbers[0], find_numbers[1]);
+            sum += should_multi ? find_numbers[0] * find_numbers[1] : 0;
+            free(find_numbers);
+        }
+
+        should_multi = new_multi;
     }
 
     return sum;

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-char **split_string(char *input, int line_length, char *delimiter, int *collector_length, int **inner_collector_length) {
+char** split_string(char *input, int line_length, char *delimiter, int *collector_length, int **inner_collector_length) {
     int match_length = 0;
     int delimiter_length = strlen(delimiter);
     char *token = malloc(sizeof(char) * delimiter_length + 1);
@@ -61,4 +61,59 @@ char **split_string(char *input, int line_length, char *delimiter, int *collecto
     }
 
     return collector;
+}
+
+char* copy_value(char* input) {
+    int input_length = strlen(input);
+    char* new = malloc(sizeof(char) * input_length);
+
+    strcpy(new, input);
+
+    return new;
+}
+
+/**
+ * substring
+ * 
+ * Trys to split the given input at a position. This will always return an array of two char*.
+ *
+ * If the position < 0, it will return ["", "input"]
+ * If the position >= input_length, it will return ["input", ""]
+ */
+char** substring(char* input, int position) {
+    char** substrings = malloc(sizeof(char*));
+
+    int input_length = strlen(input);
+
+    if (position < 0) {
+        char* new_string = copy_value(input);
+        substrings[1] = new_string;
+        return substrings;
+    }
+
+    if (position >= input_length) {
+        char* new_string = copy_value(input);
+        substrings[0] = new_string;
+        return substrings;
+    }
+
+    char* first_substring = malloc(sizeof(char) * (position + 1));
+    char* second_substring = malloc(sizeof(char) * (input_length - position + 1));
+
+    for (int first_index = 0; first_index < position; first_index++) {
+        first_substring[first_index] = input[first_index];
+    }
+
+    first_substring[position] = '\0';
+
+    for (int second_index = 0; second_index < (input_length - position + 1); second_index++) {
+        second_substring[second_index] = input[second_index + position];
+    }
+
+    second_substring[input_length - position] = '\0';
+
+    substrings[0] = first_substring;
+    substrings[1] = second_substring;
+
+    return substrings;
 }

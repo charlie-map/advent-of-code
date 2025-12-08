@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../fileread.h"
-#include "../split_string.h"
+#include "../,,/utils/fileread.h"
+#include "../../utils/split_string.h"
 
 char *build_directional_input_from_keypad(
     char *keypad_input,

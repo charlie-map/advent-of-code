@@ -48,12 +48,13 @@ int get_number_of_times_at_0(char **instructions, int instruction_length)
         zero_hits += clicks_past_zero;
 
         int number = raw_number % 100;
+        printf("Using number %d\n", number);
 
         if (strcmp(split[0], "R") == 0) {
             current_position += number;
 
             if (current_position >= 100) {
-                zero_hits++;
+                zero_hits += current_position - number != 0 ? 1 : 0;
                 current_position -= 100;
             } else if (current_position == 0) {
                 zero_hits++;
@@ -62,7 +63,7 @@ int get_number_of_times_at_0(char **instructions, int instruction_length)
             current_position -= number;
 
             if (current_position < 0) {
-                zero_hits++;
+                zero_hits += current_position + number != 0 ? 1 : 0;
                 current_position += 100;
             } else if (current_position == 0) {
                 zero_hits++;
